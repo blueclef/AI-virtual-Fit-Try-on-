@@ -15,14 +15,35 @@ const fileToImageFile = (file: File): Promise<ImageFile> => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      const result = reader.result as string;
-      const [header, base64] = result.split(',');
-      if (!header || !base64) {
-        reject(new Error("Invalid file format"));
-        return;
+      const dataUrl = reader.result as string;
+
+      if (file.type === 'image/avif') {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            return reject(new Error('Could not get canvas context for image conversion.'));
+          }
+          ctx.drawImage(img, 0, 0);
+          const pngDataUrl = canvas.toDataURL('image/png');
+          const [, pngBase64] = pngDataUrl.split(',');
+          if (!pngBase64) {
+            return reject(new Error('Failed to convert AVIF to PNG.'));
+          }
+          resolve({ base64: pngBase64, mimeType: 'image/png', name: file.name });
+        };
+        img.onerror = () => reject(new Error('Failed to load AVIF image for conversion.'));
+        img.src = dataUrl;
+      } else {
+        const [, base64] = dataUrl.split(',');
+        if (!base64) {
+          return reject(new Error("Invalid file format: could not extract base64 data."));
+        }
+        resolve({ base64, mimeType: file.type || 'application/octet-stream', name: file.name });
       }
-      const mimeType = header.match(/:(.*?);/)?.[1] || 'application/octet-stream';
-      resolve({ base64, mimeType, name: file.name });
     };
     reader.onerror = (error) => reject(error);
   });
