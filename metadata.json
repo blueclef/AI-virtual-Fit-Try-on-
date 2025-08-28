@@ -1,0 +1,5 @@
+{
+  "name": "AI 가상 피팅 (AI Virtual Try-On)",
+  "description": "사용자가 인물 사진과 옷 사진을 업로드하면, '나노 바나나' AI 모델이 해당 인물에게 옷을 입힌 이미지를 생성해주는 애플리케이션입니다.",
+  "requestFramePermissions": []
+}
